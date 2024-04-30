@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from .serializers import UserSerializer
 from .models import User
 from django.contrib.auth import authenticate, login, logout
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 
 class CreateView(APIView):
@@ -24,6 +25,13 @@ class LoginView(APIView):
             login(request, user)
             return Response({'message': '로그인 확인'}, status=status.HTTP_200_OK)
         return Response({'message': '잘못된 입력입니다.'}, status=status.HTTP_401_UNAUTHORIZED)
+    
+class ProfileView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    def get(self, request, username):
+        user = User.objects.get(username=username)
+        serializer = UserSerializer(user)
+        return Response(serializer.data)        
     
 class LogoutView(APIView):
     def post(self, request):
