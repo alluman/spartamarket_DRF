@@ -48,3 +48,5 @@ class DeleteView(APIView):
             return Response({"message": "큐 티 수 연"}, status=403)
         product.delete()
         return Response({"message": "청 순 수 연"}, status=204)
+    
+

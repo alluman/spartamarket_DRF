@@ -74,3 +74,14 @@ class PasswordView(APIView):
         user.set_password(new_password)
         user.save()
         return Response({'message': '청 순 수 연'}, status=200)
+    
+class DeleteView(APIView):
+    permission_classes = [IsAuthenticated]
+    def delete(self, request):
+        user = request.user
+        password = request.data['password']
+        if not user.check_password(password):
+            return Response({'message': '큐 티 수 연(불일치)'}, status=400)
+        user.delete()
+        return Response({"message": "청 순 수 연"}, status=204)
+    
