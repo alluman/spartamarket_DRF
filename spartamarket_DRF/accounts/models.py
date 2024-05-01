@@ -8,4 +8,3 @@ class User(AbstractUser):
     birthday = models.DateField()
     gender = models.CharField(max_length=50)
     introduction = models.TextField(blank=True, null=True)
-    

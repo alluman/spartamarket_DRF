@@ -5,6 +5,7 @@ from .models import Product
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser
 
 class ProductList(APIView):
     def get(self, request):
@@ -17,6 +18,7 @@ class ProductList(APIView):
     
 class CreateView(APIView):
     permission_classes = [IsAuthenticated]
+    # parser_classes = [MultiPartParser, FormParser]
     def post(self, request):
         request.data['author'] = request.user.id
         serializer = ProductSerializer(data=request.data)
@@ -28,6 +30,7 @@ class CreateView(APIView):
 
 class UpdateView(APIView):
     permission_classes = [IsAuthenticated]
+    # parser_classes = [MultiPartParser, FormParser]
     def put(self, request, productId):
         product = get_object_or_404(Product, pk=productId)
         if request.user != product.author:
@@ -40,7 +43,7 @@ class UpdateView(APIView):
         else:
             return Response(serializer.errors, status=400)
 
-class DeleteView(APIView):
+class DeleteView(APIView): 
     permission_classes = [IsAuthenticated]
     def delete(self, request, productId):
         product = get_object_or_404(Product, pk=productId)
@@ -48,5 +51,16 @@ class DeleteView(APIView):
             return Response({"message": "큐 티 수 연"}, status=403)
         product.delete()
         return Response({"message": "청 순 수 연"}, status=204)
-    
 
+class LikeView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, productId):
+        product = get_object_or_404(Product, pk=productId)
+        user = request.user
+        if  product.like_user.filter(pk=request.user.pk).exists():
+            product.like_user.remove(request.user)
+            message = "좋아요 취소"
+        else:
+            product.like_user.add(request.user)
+            message = "좋아요"
+        return Response({"message": message}, status=200)
