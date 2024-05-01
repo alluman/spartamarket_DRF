@@ -33,6 +33,7 @@ class UpdateView(APIView):
         if request.user != product.author:
             return Response({"message": "큐 티 수 연"}, status=403)
         serializer = ProductSerializer(product, data=request.data)
+        request.data['author'] = request.user.id
         if serializer.is_valid():
             product = serializer.save()
             return Response({"message": "청 순 수 연", "product_id": product.id}, status=200)
