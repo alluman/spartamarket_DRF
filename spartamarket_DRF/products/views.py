@@ -22,8 +22,8 @@ class CreateView(APIView):
 #유저의 접속여부, 현재 접속중인 유저를 작성자로 등록하는 과정이 없음
 
 class UpdateView(APIView):
-    def put(self, request, pk):
-        product = get_object_or_404(Product, pk=pk)
+    def put(self, request, productId):
+        product = get_object_or_404(Product, pk=productId)
         serializer = ProductSerializer(product, data=request.data)
         if serializer.is_valid():
             serializer.save()
