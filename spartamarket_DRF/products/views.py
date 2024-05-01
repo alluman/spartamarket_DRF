@@ -56,7 +56,6 @@ class LikeView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request, productId):
         product = get_object_or_404(Product, pk=productId)
-        user = request.user
         if  product.like_user.filter(pk=request.user.pk).exists():
             product.like_user.remove(request.user)
             message = "좋아요 취소"
