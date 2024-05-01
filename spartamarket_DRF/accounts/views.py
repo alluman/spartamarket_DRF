@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .serializers import UserSerializer
+from .serializers import UserCreateSerializer, UserUpdateSerializer
 from .models import User
 from django.contrib.auth import authenticate, login, logout
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404
 
 class CreateView(APIView):
     def post(self, request):
-        serializer = UserSerializer(data=request.data)
+        serializer = UserCreateSerializer(data=request.data)
         if serializer.is_valid():
             email = serializer.validated_data['email']
             if email and User.objects.filter(email=email).exists():
@@ -35,7 +35,7 @@ class ProfileView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
     def get(self, request, username):
         user = get_object_or_404(User, username=username)
-        serializer = UserSerializer(user)
+        serializer = UserUpdateSerializer(user)
         return Response(serializer.data)        
     
 class LogoutView(APIView):
@@ -49,7 +49,7 @@ class UpdateView(APIView):
         if request.user.username != username:
             return Response({'message': '큐 티 수 연(권한없음)'}, status=403)
         user = get_object_or_404(User, username=username)
-        serializer = UserSerializer(user, data=request.data)
+        serializer = UserUpdateSerializer(user, data=request.data)
         if serializer.is_valid():
             if username!=user.username and User.objects.filter(username=username).exists():
                 return Response({'message': '큐 티 수 연 (유저네임중복)'}, status=400)
