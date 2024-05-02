@@ -10,9 +10,9 @@ class Product(models.Model):
     view = models.PositiveIntegerField(default=0)
     price = models.PositiveIntegerField()
     author = models.ForeignKey('accounts.User', on_delete=models.CASCADE)
-    like_user = models.ManyToManyField('accounts.User', related_name='like_products')
-    hashtags = models.ManyToManyField(Hashtag, related_name='products')
-    # image = models.ImageField(upload_to='images/', null=True, blank=True)
+    like_user = models.ManyToManyField('accounts.User', related_name='like_products', default=0)
+    # hashtags = models.ManyToManyField(Hashtag, related_name='products')
+    image = models.ImageField(upload_to='images/', blank=True)
     
     def __str__(self):
         return self.title

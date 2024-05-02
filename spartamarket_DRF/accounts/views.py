@@ -1,10 +1,13 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework import status
 from .serializers import UserCreateSerializer, UserUpdateSerializer
 from .models import User
-from django.contrib.auth import authenticate, login, logout
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from django.shortcuts import get_object_or_404
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
+# from django.contrib.auth import authenticate, login, logout
 
 class CreateView(APIView):
     def post(self, request):
@@ -12,24 +15,24 @@ class CreateView(APIView):
         if serializer.is_valid():
             email = serializer.validated_data['email']
             if email and User.objects.filter(email=email).exists():
-                return Response({'message': '큐 티 수 연 (이메일중복)'}, status=400)  
+                return Response({'message': '중복된 email입니다.'}, status=status.HTTP_400_BAD_REQUEST)  
             user = serializer.save()
             password = serializer.validated_data['password']
             user.set_password(password)
             user.save()
-            return Response({"message": "청 순 수 연", "userId": user.id}, status=201)
+            return Response({"message": "저장되었습니다", "userId": user.id}, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=400)
         
-class LoginView(APIView):
-    def post(self, request):
-        username = request.data['username']
-        password = request.data['password']
-        user = authenticate(username=username, password=password)
-        if user:
-            login(request, user)
-            return Response({'message': f'{username}님 청순수연!'}, status=200)
-        return Response({'message': '큐 티 수 연(잘못된접근)'}, status=401)
+# class LoginView(APIView):
+#     def post(self, request):
+#         username = request.data['username']
+#         password = request.data['password']
+#         user = authenticate(username=username, password=password)
+#         if user:
+#             login(request, user)
+#             return Response({'message': f'{username}님 안녕하세요!'}, status=status.HTTP_200_OK)
+#         return Response({'message': '잘못된 접근입니다.'}, status=status.HTTP_400_BAD_REQUEST)
     
 class ProfileView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -40,24 +43,25 @@ class ProfileView(APIView):
     
 class LogoutView(APIView):
     def post(self, request):
-        logout(request)
-        return Response({'message': '청 순 수 연'}, status=200)
+        token = RefreshToken(request.data.get('refresh'))
+        token.blacklist()
+        return Response({'message': '성공적으로 로그아웃 되었습니다.'}, status.HTTP_200_OK)
 
 class UpdateView(APIView):
     permission_classes = [IsAuthenticated]
     def put(self, request, username):
         if request.user.username != username:
-            return Response({'message': '큐 티 수 연(권한없음)'}, status=403)
+            return Response({'message': '권한이 없습니다.'}, status=status.HTTP_401_UNAUTHORIZED)
         user = get_object_or_404(User, username=username)
         serializer = UserUpdateSerializer(user, data=request.data)
         if serializer.is_valid():
             if username!=user.username and User.objects.filter(username=username).exists():
-                return Response({'message': '큐 티 수 연 (유저네임중복)'}, status=400)
+                return Response({'message': '중복된 username'}, status=status.HTTP_400_BAD_REQUEST)
             email = serializer.validated_data.get('email')
             if email!=user.email and User.objects.filter(email=email).exists():
-                return Response({'message': '큐 티 수 연 (이메일중복)'}, status=400)
+                return Response({'message': '중복된 email'}, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
-            return Response({'message': '청 순 수 연', "userId": user.id}, status=200)
+            return Response({'message': '저장되었습니다', "userId": user.id}, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=400)
 
@@ -68,12 +72,12 @@ class PasswordView(APIView):
         old_password = request.data['old_password']
         new_password = request.data['new_password']
         if not user.check_password(old_password):
-            return Response({'message': '큐 티 수 연(기존)'}, status=400)
+            return Response({'message': '예전 password와 일치하지 않습니다.'}, status=status.HTTP_400_BAD_REQUEST)
         if new_password == old_password:
-            return Response({'message': '큐 티 수 연(일치)'}, status=400)
+            return Response({'message': '동일한 password입니다.'}, status=status.HTTP_400_BAD_REQUEST)
         user.set_password(new_password)
         user.save()
-        return Response({'message': '청 순 수 연'}, status=200)
+        return Response({'message': '변경되었습니다.'}, status=status.HTTP_200_OK)
     
 class DeleteView(APIView):
     permission_classes = [IsAuthenticated]
@@ -81,9 +85,9 @@ class DeleteView(APIView):
         user = request.user
         password = request.data['password']
         if not user.check_password(password):
-            return Response({'message': '큐 티 수 연(불일치)'}, status=400)
+            return Response({'message': 'password가 일치하지 않습니다.'}, status=status.HTTP_400_BAD_REQUEST)
         user.delete()
-        return Response({"message": "청 순 수 연"}, status=204)
+        return Response({"message": "삭제되었습니다."}, status=status.HTTP_204_NO_CONTENT)
 
 class FollowView(APIView):
     permission_classes = [IsAuthenticated]
@@ -96,5 +100,5 @@ class FollowView(APIView):
             else:
                 user.followers.add(request.user)
                 message = "팔로우"
-            return Response({"message": message}, status=200)
-        return Response({'message': '잘못된 접근입니다'}, status=400)
+            return Response({"message": message}, status=status.HTTP_200_OK)
+        return Response({'message': '잘못된 접근입니다'}, status=status.HTTP_400_BAD_REQUEST)
