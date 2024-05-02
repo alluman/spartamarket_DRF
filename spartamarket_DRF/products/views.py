@@ -6,6 +6,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
+import re
 
 class ProductList(APIView):
     def get(self, request):
@@ -23,18 +24,13 @@ class CreateView(APIView):
         data['author'] = request.user.id
         serializer = ProductSerializer(data=data)
         if serializer.is_valid():
-            product = serializer.save()
-            # hashtags = serializer.validated_data.get('hashtags', [])
-            # for tag_name in hashtags:
-            #     tag, _ = Hashtag.objects.get_or_create(name=tag_name)
-            #     product.hashtags.add(tag)           
+            product = serializer.save()            
             return Response({"message": "상품을 등록하였습니다.", "productId": product.id}, status=status.HTTP_201_CREATED)
         else:
-            return Response(serializer.errors, status=400)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UpdateView(APIView):
     permission_classes = [IsAuthenticated]
-    # parser_classes = [MultiPartParser, FormParser]
     def put(self, request, productId):
         product = get_object_or_404(Product, pk=productId)
         if request.user != product.author:
